@@ -137,6 +137,7 @@
   .badge{font-family:var(--font-mono);font-size:11px;padding:4px 10px;border:1px solid var(--gold);color:var(--gold);border-radius:20px;}
   .action-panel{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
   .fog-note{font-size:11px;color:var(--dim);font-style:italic;}
+  .turn-hint{font-size:12px;color:var(--gold);margin:0 0 6px;}
   .helpbox{font-size:12px;color:var(--dim);line-height:1.6;}
   .helpbox b{color:var(--paper);}
   a.linklike{color:var(--gold);cursor:pointer;text-decoration:underline;font-size:12px;}
@@ -262,6 +263,7 @@ async function saveGame(code, state){
 function newGame(code){
   return {
     code, status:'draft', turn:'p1', turnNumber:1,
+    movedThisTurn:false, actionUsedThisTurn:false,
     players:{
       p1:{joined:true, ready:false, budget:XP_START, roster:[], placed:false},
       p2:{joined:false, ready:false, budget:XP_START, roster:[], placed:false},
@@ -335,12 +337,13 @@ function legalMovesFor(state, c, r){
   const owner = piece.owner;
   const rangeBoost = state.terrainsHit.includes(100) ? 1 : 0;
   let moves = [];
-  switch(piece.type){
-    case 'ramagog':
+  const moveType = PIECES[piece.type] ? PIECES[piece.type].move : null;
+  switch(moveType){
+    case 'rook':
       moves = slide(state,c,r,[[1,0],[-1,0],[0,1],[0,-1]], null, owner); break;
-    case 'bolssa':
+    case 'bishop':
       moves = slide(state,c,r,[[1,1],[1,-1],[-1,1],[-1,-1]], null, owner); break;
-    case 'mechite': {
+    case 'knight': {
       const deltas=[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]];
       for(const [dc,dr] of deltas){
         const cc=c+dc, rr=r+dr;
@@ -395,16 +398,31 @@ function legalMovesFor(state, c, r){
       }
       break;
     }
-    case 'heavy3': {
-      for(const [dc,dr] of [[1,0],[-1,0],[0,1],[0,-1]]){
-        const cc=c+dc, rr=r+dr;
-        if(!inBounds(state,cc,rr)) continue;
-        const p = occ(state,cc,rr);
-        if(!p) moves.push([cc,rr,false]);
-        else if(p.owner!==owner && !p.wallOwner) moves.push([cc,rr,true]);
+  }
+  return moves;
+}
+
+/* ---- De la Kantos: real 3-cell body (occupies 3 squares in a line) ---- */
+function delakantosBody(ac, ar, orientation){
+  return orientation==='v' ? [[ac,ar],[ac,ar+1],[ac,ar+2]] : [[ac,ar],[ac+1,ar],[ac+2,ar]];
+}
+function delakantosLegalMoves(state, ac, ar, orientation, owner){
+  const oldBody = delakantosBody(ac,ar,orientation);
+  const oldKeys = new Set(oldBody.map(([cc,rr])=>cellKey(cc,rr)));
+  const moves=[];
+  for(const [dc,dr] of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const newBody = oldBody.map(([cc,rr])=>[cc+dc,rr+dr]);
+    let ok=true, capture=false;
+    for(const [nc,nr] of newBody){
+      if(!inBounds(state,nc,nr)){ ok=false; break; }
+      if(oldKeys.has(cellKey(nc,nr))) continue; // overlaps its own current body — always fine
+      const p = occ(state,nc,nr);
+      if(p){
+        if(p.owner===owner || p.wallOwner){ ok=false; break; }
+        capture = true;
       }
-      break;
     }
+    if(ok) moves.push([ac+dc, ar+dr, capture]);
   }
   return moves;
 }
@@ -564,9 +582,22 @@ function renderDraft(){
 function moveLabel(m){
   return {rook:'Torre',bishop:'Alfil',knight:'Caballo',diag3:'Diagonal rápida (alcance 3)',
     pawnAdv:'Peón avanzado',king1:'Un paso (todas direcciones)',shapeshift:'Cambia según región',
-    heavy3:'Un paso, cuerpo de 3 casillas'}[m] || m;
+    heavy3:'Un paso ortogonal — cuerpo de 3 casillas en línea'}[m] || m;
 }
 function cryptoId(){ return Math.random().toString(36).slice(2,10); }
+
+function escapeAttr(s){
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function pieceTooltip(piece, revealed){
+  if(piece.wallOwner) return 'Muro temporal (Ramagog) — bloquea el paso durante unos turnos.';
+  if(!revealed) return 'Pieza enemiga no identificada — se revelará al actuar, ser capturada, o si ya conoces ese tipo.';
+  const spec = PIECES[piece.type];
+  if(!spec) return '';
+  let t = spec.name+' · Nivel '+piece.level+'\nMovimiento: '+moveLabel(spec.move)+'\n'+spec.desc;
+  if(spec.id==='delakantos') t += ' Ocupa 3 casillas en línea.';
+  return t;
+}
 
 /* ---------- Screen: Placement ---------- */
 function renderPlacement(){
@@ -645,12 +676,12 @@ function cellHTML(c,r,interactive,mode){
   }
   if(mode==='play' && interactive){
     if(selected && selected.board==='main'){
-      isSelected = selected.c===c && selected.r===r;
+      const selPiece = occ(game, selected.c, selected.r);
+      isSelected = !!(piece && selPiece && piece.uid===selPiece.uid);
       const legal = (selected.moves||[]).find(m=>m[0]===c && m[1]===r);
       if(legal){ isLegal=true; isCapture=legal[2]; }
     }
-    if(piece && piece.owner===myRole && game.turn===myRole && !selected) isSelectable=true;
-    else if(piece && piece.owner===myRole && game.turn===myRole) isSelectable=true;
+    if(piece && piece.owner===myRole && game.turn===myRole) isSelectable=true;
   }
   if(isSelectable) cls+=' selectable';
   if(isLegal) cls+= isCapture? ' legal-capture legal' : ' legal';
@@ -660,11 +691,12 @@ function cellHTML(c,r,interactive,mode){
   if(piece){
     const mineView = piece.owner===myRole;
     const revealed = mineView || game.seen[myRole].includes(piece.type);
+    const tip = escapeAttr(pieceTooltip(piece, revealed));
     if(piece.wallOwner){
-      inner = html`<div class="piece ${piece.owner} wallpiece">${WALL_ICON_SVG}</div>`;
+      inner = html`<div class="piece ${piece.owner} wallpiece" title="${tip}">${WALL_ICON_SVG}</div>`;
     } else {
       const iconMarkup = revealed ? pieceIconSVG(piece.type) : '<span class="fogmark">?</span>';
-      inner = html`<div class="piece ${piece.owner}${revealed?'':' fog'}">${iconMarkup}${piece.level>1?'<span class="lvl">'+piece.level+'</span>':''}</div>`;
+      inner = html`<div class="piece ${piece.owner}${revealed?'':' fog'}" title="${tip}">${iconMarkup}${piece.level>1?'<span class="lvl">'+piece.level+'</span>':''}</div>`;
     }
   }
   return html`<div class="${cls}" data-c="${c}" data-r="${r}">${inner}</div>`;
@@ -688,7 +720,21 @@ async function handlePlaceClick(c,r){
   if(occ(game,c,r)) return;
   const rec = me.roster.find(x=>x.uid===selected.pickUid);
   if(!rec || rec._placed) return;
-  game.cells[cellKey(c,r)] = {owner:myRole, type:rec.type, uid:rec.uid, level:1, cooldowns:{}, dodged:false};
+
+  if(rec.type==='delakantos'){
+    const body = delakantosBody(c,r,'h');
+    const fits = body.every(([cc,rr])=> inBounds(game,cc,rr) && allowedRows.includes(rr) && !occ(game,cc,rr));
+    if(!fits){
+      alert('De la Kantos ocupa 3 casillas seguidas en horizontal: elige una casilla con dos huecos libres a su derecha, dentro de tus filas de despliegue.');
+      return;
+    }
+    body.forEach(([cc,rr],i)=>{
+      if(i===0) game.cells[cellKey(cc,rr)] = {owner:myRole, type:rec.type, uid:rec.uid, level:1, cooldowns:{}, orientation:'h', isAnchor:true};
+      else game.cells[cellKey(cc,rr)] = {owner:myRole, type:rec.type, uid:rec.uid, shadow:true, anchorKey:cellKey(c,r)};
+    });
+  } else {
+    game.cells[cellKey(c,r)] = {owner:myRole, type:rec.type, uid:rec.uid, level:1, cooldowns:{}, dodged:false};
+  }
   rec._placed = true;
   selected = null;
   await saveGame(code, game);
@@ -764,7 +810,7 @@ function renderCornerHTML(corner, interactive){
           const legal = (selected.moves||[]).find(m=>m[0]===c && m[1]===r);
           if(legal) isLegal=true;
         }
-        if(p && p.owner===myRole && game.turn===myRole) isSelectable=true;
+        if(p && p.owner===myRole && game.turn===myRole && !game.movedThisTurn) isSelectable=true;
         if(pendingAction==='enterCorner' && pendingAction && !p) isSelectable=true;
       }
       if(isSelectable) cls+=' selectable';
@@ -773,7 +819,8 @@ function renderCornerHTML(corner, interactive){
       if(p){
         const revealed = p.owner===myRole || game.seen[myRole].includes(p.type);
         const iconMarkup = revealed ? pieceIconSVG(p.type) : '<span class="fogmark">?</span>';
-        inner = html`<div class="piece ${p.owner}${revealed?'':' fog'}">${iconMarkup}</div>`;
+        const tip = escapeAttr(pieceTooltip(p, revealed));
+        inner = html`<div class="piece ${p.owner}${revealed?'':' fog'}" title="${tip}">${iconMarkup}</div>`;
       }
       cells += html`<div class="${cls}" data-corner="${corner}" data-c="${c}" data-r="${r}">${inner}</div>`;
     }
@@ -800,31 +847,34 @@ function attachCornerHandlers(){
 function renderActionPanel(isMyTurn){
   if(!isMyTurn || game.winner) return '';
   const me = game.players[myRole];
+  const actionDone = game.actionUsedThisTurn;
   let buttons = '<button id="btnEndTurn" class="primary">Terminar turno</button>';
+  let hint = game.movedThisTurn ? 'Ya has movido este turno.' : 'Aún puedes mover una pieza.';
+  hint += actionDone ? ' Ya has usado tu acción.' : ' Puedes usar una acción.';
   if(selected && selected.board==='main'){
     const piece = occ(game, selected.c, selected.r);
     if(piece){
       const spec = PIECES[piece.type];
       if(spec.ability!=='none' && spec.ability!=='dodge' && spec.ability!=='earlyPromote' && spec.ability!=='drag'){
         const onCd = (piece.cooldowns[spec.ability]||0)>0 && !game.terrainsHit.includes(200);
-        buttons += `<button id="btnUseAbility" ${onCd?'disabled':''}>Usar habilidad: ${spec.ability}</button>`;
+        buttons += `<button id="btnUseAbility" ${onCd||actionDone?'disabled':''}>Usar habilidad: ${spec.ability}</button>`;
       }
       // promotion check
       const canAscend = selected.r === ascensionRow(game, piece.owner) || (spec.ability==='earlyPromote' && reachedMid(selected.r, piece.owner));
       if(canAscend && piece.level<3){
-        buttons += `<button id="btnPromote">Promocionar (nivel ${piece.level+1})</button>`;
+        buttons += `<button id="btnPromote" ${actionDone?'disabled':''}>Promocionar (nivel ${piece.level+1})</button>`;
       }
       // fusion check
       const fusionPartner = findFusionPartner(selected.c, selected.r);
       if(fusionPartner){
-        buttons += `<button id="btnFuse">Fusionar en ${PIECES[fusionPartner.result].name}</button>`;
+        buttons += `<button id="btnFuse" ${actionDone?'disabled':''}>Fusionar en ${PIECES[fusionPartner.result].name}</button>`;
       }
     }
   }
   if(game.cornerTokens[myRole]>0){
-    buttons += `<button id="btnUseCornerToken" class="${pendingAction==='enterCorner'?'primary':''}">Usar ficha de esquina (${game.cornerTokens[myRole]})</button>`;
+    buttons += `<button id="btnUseCornerToken" class="${pendingAction==='enterCorner'?'primary':''}" ${actionDone?'disabled':''}>Usar ficha de esquina (${game.cornerTokens[myRole]})</button>`;
   }
-  return `<div class="action-panel">${buttons}</div>`;
+  return `<p class="turn-hint">${hint}</p><div class="action-panel">${buttons}</div>`;
 }
 
 function reachedMid(r, owner){
@@ -880,20 +930,42 @@ async function handlePlayClick(c,r){
   }
 
   if(selected && selected.board==='main'){
-    if(selected.c===c && selected.r===r){ selected=null; render(); return; }
+    const selPiece = occ(game, selected.c, selected.r);
+    if(selPiece && piece && piece.uid===selPiece.uid){ selected=null; render(); return; }
     const legal = (selected.moves||[]).find(m=>m[0]===c && m[1]===r);
-    if(legal){ await executeMove(selected.c, selected.r, c, r); return; }
+    if(legal){
+      if(selPiece.type==='delakantos') await executeDelaKantosMove(selected.c, selected.r, c, r, selPiece.orientation);
+      else await executeMove(selected.c, selected.r, c, r);
+      return;
+    }
     if(piece && piece.owner===myRole){
-      selected = {board:'main', c, r, moves: legalMovesFor(game,c,r)};
+      selectMainPiece(c,r);
       render(); return;
     }
     selected=null; render(); return;
   }
 
   if(piece && piece.owner===myRole){
-    selected = {board:'main', c, r, moves: legalMovesFor(game,c,r)};
+    selectMainPiece(c,r);
     render();
   }
+}
+
+function selectMainPiece(c,r){
+  const clicked = occ(game,c,r);
+  let ac=c, ar=r;
+  if(clicked.shadow){
+    const [sc,sr] = clicked.anchorKey.split(',').map(Number);
+    ac=sc; ar=sr;
+  }
+  const anchorPiece = occ(game,ac,ar);
+  let moves = [];
+  if(!game.movedThisTurn){
+    moves = anchorPiece.type==='delakantos'
+      ? delakantosLegalMoves(game, ac, ar, anchorPiece.orientation, myRole)
+      : legalMovesFor(game, ac, ar);
+  }
+  selected = {board:'main', c:ac, r:ar, moves};
 }
 
 async function handleCornerClick(corner,c,r){
@@ -902,6 +974,7 @@ async function handleCornerClick(corner,c,r){
   const p = cb.cells[cellKey(c,r)];
 
   if(pendingAction==='enterCorner'){
+    if(game.actionUsedThisTurn){ pendingAction=null; render(); return; }
     if(p) return;
     if(!selected || selected.board!=='main'){ alert('Primero selecciona en el tablero principal la pieza que quieres enviar.'); return; }
     const mainPiece = occ(game, selected.c, selected.r);
@@ -909,6 +982,7 @@ async function handleCornerClick(corner,c,r){
     delete game.cells[cellKey(selected.c, selected.r)];
     cb.cells[cellKey(c,r)] = {...mainPiece};
     game.cornerTokens[myRole]--;
+    game.actionUsedThisTurn = true;
     pushLog(game, (myRole==='p1'?'Jugador 1':'Jugador 2')+' envía una pieza al tablero '+corner+'.');
     pendingAction=null; selected=null;
     await saveGame(code, game);
@@ -921,7 +995,7 @@ async function handleCornerClick(corner,c,r){
     if(legal){ await executeCornerMove(corner, selected.c, selected.r, c, r); return; }
     selected=null; render(); return;
   }
-  if(p && p.owner===myRole){
+  if(p && p.owner===myRole && !game.movedThisTurn){
     selected = {board:'corner', corner, c, r, moves: cornerLegalMoves(game,corner,c,r)};
     render();
   }
@@ -929,6 +1003,7 @@ async function handleCornerClick(corner,c,r){
 
 /* ---------- move execution ---------- */
 async function executeMove(fc,fr,tc,tr){
+  if(game.movedThisTurn) return;
   const piece = occ(game,fc,fr);
   const target = occ(game,tc,tr);
   if(target && target.owner!==piece.owner){
@@ -962,10 +1037,42 @@ async function executeMove(fc,fr,tc,tr){
   render();
 }
 
+async function executeDelaKantosMove(fc,fr,tc,tr,orientation){
+  if(game.movedThisTurn) return;
+  const anchorPiece = occ(game,fc,fr);
+  const owner = anchorPiece.owner;
+  const oldBody = delakantosBody(fc,fr,orientation);
+  const newBody = delakantosBody(tc,tr,orientation);
+  const oldKeys = new Set(oldBody.map(([cc,rr])=>cellKey(cc,rr)));
+  const capturedUids = new Set();
+  for(const [cc,rr] of newBody){
+    if(oldKeys.has(cellKey(cc,rr))) continue;
+    const victim = occ(game,cc,rr);
+    if(victim && victim.owner!==owner && !capturedUids.has(victim.uid)){
+      capturedUids.add(victim.uid);
+      captureAt(cc,rr,owner);
+      // clear any other stray cells belonging to that same victim (if it was itself multi-cell)
+      for(const kk in game.cells){ if(game.cells[kk] && game.cells[kk].uid===victim.uid) delete game.cells[kk]; }
+    }
+  }
+  for(const [cc,rr] of oldBody) delete game.cells[cellKey(cc,rr)];
+  newBody.forEach(([cc,rr],i)=>{
+    if(i===0) game.cells[cellKey(cc,rr)] = {...anchorPiece, isAnchor:true};
+    else game.cells[cellKey(cc,rr)] = {owner, type:'delakantos', uid:anchorPiece.uid, shadow:true, anchorKey:cellKey(newBody[0][0],newBody[0][1])};
+  });
+  finalizeMoveExtras(anchorPiece, tc, tr);
+  selected=null;
+  checkCornerStreaks();
+  checkWinConditions();
+  await saveGame(code, game);
+  render();
+}
+
 function finalizeMoveExtras(piece, tc, tr){
   // reveal own type to opponent's fog
   const opp = otherOf(piece.owner);
   if(!game.seen[opp].includes(piece.type)) game.seen[opp].push(piece.type);
+  game.movedThisTurn = true;
   // Goa early promote auto-flag handled via UI promote button (reachedMid)
 }
 
@@ -990,6 +1097,7 @@ function captureAt(c,r,byOwner){
 }
 
 async function executeCornerMove(corner, fc,fr,tc,tr){
+  if(game.movedThisTurn) return;
   const cb = game.corners[corner];
   const piece = cb.cells[cellKey(fc,fr)];
   const target = cb.cells[cellKey(tc,tr)];
@@ -1002,6 +1110,7 @@ async function executeCornerMove(corner, fc,fr,tc,tr){
   }
   delete cb.cells[cellKey(fc,fr)];
   cb.cells[cellKey(tc,tr)] = piece;
+  game.movedThisTurn = true;
   selected=null;
   checkCornerStreaks();
   checkWinConditions();
@@ -1073,6 +1182,7 @@ function checkWinConditions(){
 
 /* ---------- actions ---------- */
 async function useAbility(){
+  if(game.actionUsedThisTurn) return;
   if(!selected || selected.board!=='main') return;
   const piece = occ(game, selected.c, selected.r);
   if(!piece) return;
@@ -1114,11 +1224,13 @@ async function useAbility(){
     }
   }
   piece.cooldowns[spec.ability] = spec.cd;
+  game.actionUsedThisTurn = true;
   await saveGame(code, game);
   render();
 }
 
 async function promote(){
+  if(game.actionUsedThisTurn) return;
   if(!selected || selected.board!=='main') return;
   const piece = occ(game, selected.c, selected.r);
   if(!piece || piece.level>=3) return;
@@ -1127,18 +1239,21 @@ async function promote(){
   if(game.bankedXP[piece.owner] < finalCost){ alert('No tienes suficiente XP acumulado ('+finalCost+' necesario).'); return; }
   game.bankedXP[piece.owner] -= finalCost;
   piece.level++;
+  game.actionUsedThisTurn = true;
   pushLog(game,(piece.owner==='p1'?'Jugador 1':'Jugador 2')+' promociona su '+PIECES[piece.type].name+' a nivel '+piece.level+'.');
   await saveGame(code, game);
   render();
 }
 
 async function fuse(){
+  if(game.actionUsedThisTurn) return;
   if(!selected || selected.board!=='main') return;
   const partner = findFusionPartner(selected.c, selected.r);
   if(!partner) return;
   const piece = occ(game, selected.c, selected.r);
   delete game.cells[partner.otherKey];
   game.cells[cellKey(selected.c,selected.r)] = {owner:piece.owner, type:partner.result, uid:cryptoId(), level:1, cooldowns:{}, dodged:false};
+  game.actionUsedThisTurn = true;
   pushLog(game,(piece.owner==='p1'?'Jugador 1':'Jugador 2')+' fusiona sus piezas en '+PIECES[partner.result].name+'.');
   selected=null;
   await saveGame(code, game);
@@ -1159,6 +1274,8 @@ async function endTurn(){
   }
   game.turn = otherOf(game.turn);
   game.turnNumber++;
+  game.movedThisTurn = false;
+  game.actionUsedThisTurn = false;
   selected=null; pendingAction=null;
   pushLog(game,'Fin de turno.');
   await saveGame(code, game);
