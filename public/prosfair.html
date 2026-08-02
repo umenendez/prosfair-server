@@ -95,30 +95,55 @@
   .cell.zone-asc-p2{background:rgba(255,63,126,.08);}
   .cell.selectable{cursor:pointer;}
   .cell.selectable:hover{background:var(--panel-2);}
-  .cell.legal::after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:var(--gold);opacity:.85;}
+  .cell.legal::after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:var(--gold);opacity:.85;transition:transform .15s;}
+  .cell.legal:hover::after{transform:scale(1.4);}
+  .cell.legal:hover{background:rgba(232,178,61,.10);}
   .cell.legal-capture{box-shadow:inset 0 0 0 2px var(--danger);}
+  .cell.legal-capture:hover{background:rgba(255,91,91,.12);}
+  .cell.legal-ghost{box-shadow:inset 0 0 0 1px rgba(232,178,61,.55);background:rgba(232,178,61,.07);}
   .cell.selected{box-shadow:inset 0 0 0 2px var(--gold);}
   .cell.wall{background:repeating-linear-gradient(45deg,#3a3f4d,#3a3f4d 4px,#2a2e3a 4px,#2a2e3a 8px);}
-  .piece{width:26px;height:26px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#0e0f13;position:relative;}
-  .piece svg{width:17px;height:17px;display:block;}
-  .piece.wallpiece svg{width:20px;height:20px;opacity:.85;}
-  .piece .fogmark{font-family:var(--font-display);font-size:14px;font-weight:800;}
+  .cell.dk-body.dk-p1{background:rgba(41,211,216,.16);}
+  .cell.dk-body.dk-p2{background:rgba(255,63,126,.16);}
+  .cell.wall-target{box-shadow:inset 0 0 0 2px var(--gold);background:rgba(232,178,61,.12);cursor:pointer;}
+  .cell.wall-target:hover{background:rgba(232,178,61,.22);}
+  .wall-ghost{width:22px;height:22px;opacity:.5;color:var(--gold);display:flex;align-items:center;justify-content:center;}
+  .wall-ghost svg{width:18px;height:18px;}
+  .cell.fx-capture{animation:fxCapture 900ms ease-out;}
+  .cell.fx-move{animation:fxMove 700ms ease-out;}
+  @keyframes fxCapture{
+    0%{box-shadow:inset 0 0 0 3px var(--danger);background:rgba(255,91,91,.4);}
+    100%{box-shadow:inset 0 0 0 0 rgba(255,91,91,0);background:transparent;}
+  }
+  @keyframes fxMove{
+    0%{box-shadow:inset 0 0 0 3px var(--gold);background:rgba(232,178,61,.35);}
+    100%{box-shadow:inset 0 0 0 0 rgba(232,178,61,0);background:transparent;}
+  }
+  .piece{width:30px;height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#0e0f13;position:relative;transition:transform .12s;}
+  .cell.selectable:hover .piece{transform:scale(1.08);}
+  .piece svg{width:21px;height:21px;display:block;}
+  .piece.wallpiece svg{width:22px;height:22px;opacity:.85;}
+  .piece .fogmark{font-family:var(--font-display);font-size:15px;font-weight:800;}
   .piece.p1{background:var(--p1);box-shadow:0 0 8px var(--p1-glow);}
   .piece.p2{background:var(--p2);box-shadow:0 0 8px var(--p2-glow);}
   .piece.fog{background:var(--dim);color:#0e0f13;}
+  .piece.dk-shadow{box-shadow:none;position:relative;}
+  .piece.dk-shadow::after{content:"";width:6px;height:6px;border-radius:50%;background:rgba(14,15,19,.4);}
   .piece .lvl{position:absolute;bottom:-3px;right:-3px;background:var(--gold);color:#1a1300;font-size:8px;border-radius:50%;width:12px;height:12px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);}
 
   .arena{display:flex;gap:18px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
   .side-col{display:flex;flex-direction:column;gap:14px;flex:none;}
   .corner-board-block{background:var(--panel-2);border:1px solid var(--line);border-radius:2px;padding:8px;}
-  .corner-board{display:grid;grid-template-columns:repeat(5,24px);gap:2px;background:var(--line);border:1px solid var(--line);width:max-content;}
-  .corner-cell{width:24px;height:24px;background:var(--panel);display:flex;align-items:center;justify-content:center;position:relative;cursor:default;}
-  .corner-cell .piece{width:22px;height:22px;}
-  .corner-cell .piece svg{width:14px;height:14px;}
+  .corner-board{display:grid;grid-template-columns:repeat(5,26px);gap:2px;background:var(--line);border:1px solid var(--line);width:max-content;}
+  .corner-cell{width:26px;height:26px;background:var(--panel);display:flex;align-items:center;justify-content:center;position:relative;cursor:default;}
+  .corner-cell .piece{width:24px;height:24px;}
+  .corner-cell .piece svg{width:16px;height:16px;}
   .corner-cell.center{background:rgba(232,178,61,.12);}
   .corner-cell.selectable{cursor:pointer;}
   .corner-cell.selectable:hover{background:var(--panel-2);}
   .corner-cell.legal::after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:var(--gold);}
+  .corner-cell.fx-capture{animation:fxCapture 900ms ease-out;}
+  .corner-cell.fx-move{animation:fxMove 700ms ease-out;}
   .corner-label{font-family:var(--font-mono);font-size:10px;color:var(--dim);margin-bottom:4px;letter-spacing:.5px;white-space:nowrap;}
   @media (max-width:900px){ .arena{flex-direction:column;align-items:center;} .side-col{flex-direction:row;} }
 
@@ -130,11 +155,27 @@
   .turn-banner{
     font-family:var(--font-display);letter-spacing:2px;text-transform:uppercase;font-size:15px;
     padding:8px 14px;border-left:3px solid var(--gold);margin-bottom:14px;background:var(--panel-2);
+    transition:border-color .3s, background .3s;
   }
+  .turn-banner.turn-mine{border-left-color:var(--gold);background:rgba(232,178,61,.08);}
+  .turn-banner.turn-theirs{border-left-color:var(--dim);background:var(--panel-2);opacity:.85;}
+  .card.arena-glow{border-color:var(--gold);box-shadow:0 0 0 1px rgba(232,178,61,.25), 0 0 18px rgba(232,178,61,.08);}
   .log{max-height:160px;overflow-y:auto;font-family:var(--font-mono);font-size:12px;color:var(--dim);line-height:1.7;background:var(--panel-2);border:1px solid var(--line);padding:8px 12px;}
   .log div{border-bottom:1px dotted var(--line);padding:2px 0;}
   .terrain-badges{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
   .badge{font-family:var(--font-mono);font-size:11px;padding:4px 10px;border:1px solid var(--gold);color:var(--gold);border-radius:20px;}
+
+  .detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;animation:fadeIn .15s ease-out;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .detail-card{background:var(--panel);border:1px solid var(--gold);border-radius:3px;padding:26px;max-width:340px;width:100%;text-align:center;}
+  .detail-card h3{font-family:var(--font-display);letter-spacing:1.5px;text-transform:uppercase;margin:14px 0 10px;color:var(--paper);}
+  .detail-card p{font-size:13px;color:var(--dim);line-height:1.5;margin:6px 0;text-align:left;}
+  .detail-icon{width:64px;height:64px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin:0 auto;color:#0e0f13;}
+  .detail-icon svg{width:40px;height:40px;}
+  .detail-icon.p1{background:var(--p1);box-shadow:0 0 16px var(--p1-glow);}
+  .detail-icon.p2{background:var(--p2);box-shadow:0 0 16px var(--p2-glow);}
+  .detail-icon:not(.p1):not(.p2){background:var(--panel-2);border:1px solid var(--line);color:var(--dim);}
+  .detail-card button{margin-top:12px;width:100%;}
   .action-panel{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
   .fog-note{font-size:11px;color:var(--dim);font-style:italic;}
   .turn-hint{font-size:12px;color:var(--gold);margin:0 0 6px;}
@@ -182,28 +223,28 @@ const FUSIONS = [
 /* ---- original piece iconography (line/solid SVG glyphs, one per piece) ---- */
 const PIECE_ICON_PATHS = {
   // Ramagog — fortress/battlement: builds temporary walls
-  ramagog: '<path d="M5 21V11h3V8h2v3h2V8h2v3h2V8h2v3h3v10H5z"/>',
+  ramagog: '<path d="M5 21V11h3V8h2v3h2V8h2v3h2V8h2v3h3v10H5z"/><path d="M5 15h14M5 18h14" stroke="rgba(255,255,255,.3)" stroke-width="0.6"/><path d="M6 11v10M18 11v10" stroke="rgba(0,0,0,.25)" stroke-width="0.5"/>',
   // Bolssa — hook/anchor: drags an allied piece along
-  bolssa: '<path d="M12 2v9a5 5 0 0 0 9.8 1.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="3.4" r="2.1"/>',
+  bolssa: '<path d="M12 2v9a5 5 0 0 0 9.8 1.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="3.4" r="2.1"/><circle cx="20.9" cy="9.9" r="1.3" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M12 4.2v6.4" stroke="rgba(255,255,255,.35)" stroke-width="0.9" stroke-linecap="round"/>',
   // Mechite — warp diamond with motion trail: short teleport
-  mechite: '<path d="M12 2l4.2 6-4.2 6-4.2-6z"/><path d="M4 21l3.5-3.5M8.3 21l3.5-3.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  mechite: '<path d="M12 2l4.2 6-4.2 6-4.2-6z"/><path d="M12 3.6v11" stroke="rgba(255,255,255,.3)" stroke-width="0.7"/><path d="M4 21l3.5-3.5M8.3 21l3.5-3.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="4.3" cy="16.2" r="0.7" opacity=".55"/><circle cx="15.6" cy="19.3" r="0.5" opacity=".45"/>',
   // Wolfien — lightning bolt: fast diagonal, dodges the first capture
-  wolfien: '<path d="M13.2 1.5 4.8 13h5.3l-1.8 9.5L20 10.2h-5.4z"/>',
+  wolfien: '<path d="M13.2 1.5 4.8 13h5.3l-1.8 9.5L20 10.2h-5.4z" transform="translate(-2.1,1.3) scale(0.88)" opacity="0.3"/><path d="M13.2 1.5 4.8 13h5.3l-1.8 9.5L20 10.2h-5.4z"/><path d="M13.2 3.6 7.6 12" stroke="rgba(255,255,255,.35)" stroke-width="0.8" stroke-linecap="round"/>',
   // Goa — advancing arrow pawn: promotes early
-  goa: '<path d="M12 2 19 12.5H5z"/><rect x="9" y="14.5" width="6" height="6.5" rx="0.5"/>',
+  goa: '<path d="M12 2 19 12.5H5z"/><path d="M12 5 16.3 11.3H7.7z" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="0.8"/><rect x="9" y="14.5" width="6" height="6.5" rx="0.5"/><circle cx="12" cy="17.7" r="0.7" fill="rgba(0,0,0,.3)"/>',
   // Balram — anvil with force arrow: pushes enemies back
-  balram: '<path d="M12 2v5.2M8.6 5 12 1.6 15.4 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="8.5" y="9" width="7" height="5.5"/><rect x="3.5" y="15" width="17" height="6" rx="1"/>',
+  balram: '<path d="M12 2v5.2M8.6 5 12 1.6 15.4 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="8.5" y="9" width="7" height="5.5"/><path d="M10.3 9.9v3.7" stroke="rgba(255,255,255,.3)" stroke-width="0.8"/><rect x="3.5" y="15" width="17" height="6" rx="1"/><circle cx="6.3" cy="18" r="0.7" fill="rgba(0,0,0,.3)"/><circle cx="17.7" cy="18" r="0.7" fill="rgba(0,0,0,.3)"/>',
   // Kain-19 — tri-split hexagon: movement shifts by region of the board
-  kain19: '<path d="M12 1.6 20 6.3v11.4L12 22.4l-8-4.7V6.3z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 1.6v20.8M12 12 4 6.3M12 12l8-5.7" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  kain19: '<path d="M12 1.6 20 6.3v11.4L12 22.4l-8-4.7V6.3z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 1.6v20.8M12 12 4 6.3M12 12l8-5.7" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="12" r="0.7" fill="rgba(255,255,255,.55)"/>',
   // De la Kantos — three fused armored plates: occupies 3 squares, high HP
-  delakantos: '<rect x="1.5" y="9.5" width="6.3" height="6.3" rx="0.6"/><rect x="8.85" y="9.5" width="6.3" height="6.3" rx="0.6"/><rect x="16.2" y="9.5" width="6.3" height="6.3" rx="0.6"/>',
+  delakantos: '<rect x="1.5" y="9.5" width="6.3" height="6.3" rx="0.6"/><rect x="8.85" y="9.5" width="6.3" height="6.3" rx="0.6"/><rect x="16.2" y="9.5" width="6.3" height="6.3" rx="0.6"/><rect x="7.8" y="12" width="1.05" height="1.3" opacity=".55"/><rect x="15.15" y="12" width="1.05" height="1.3" opacity=".55"/><circle cx="4.65" cy="12.65" r="0.6" fill="rgba(255,255,255,.4)"/><circle cx="12" cy="12.65" r="0.6" fill="rgba(255,255,255,.4)"/><circle cx="19.35" cy="12.65" r="0.6" fill="rgba(255,255,255,.4)"/>',
 };
 function pieceIconSVG(type){
   const p = PIECE_ICON_PATHS[type];
   if(!p) return '';
   return `<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">${p}</svg>`;
 }
-const WALL_ICON_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="4" width="10" height="6" rx="0.5"/><rect x="12" y="4" width="11" height="6" rx="0.5"/><rect x="6" y="10.5" width="10" height="6" rx="0.5"/><rect x="17" y="10.5" width="6" height="6" rx="0.5"/><rect x="1" y="10.5" width="4" height="6" rx="0.5"/><rect x="1" y="17" width="10" height="6" rx="0.5"/><rect x="12" y="17" width="11" height="6" rx="0.5"/></svg>';
+const WALL_ICON_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="4" width="10" height="6" rx="0.5"/><rect x="12" y="4" width="11" height="6" rx="0.5"/><rect x="6" y="10.5" width="10" height="6" rx="0.5"/><rect x="17" y="10.5" width="6" height="6" rx="0.5"/><rect x="1" y="10.5" width="4" height="6" rx="0.5"/><rect x="1" y="17" width="10" height="6" rx="0.5"/><rect x="12" y="17" width="11" height="6" rx="0.5"/><path d="M1 4v19M12 4v19M23 4v19" stroke="rgba(255,255,255,.25)" stroke-width="0.5"/></svg>';
 
 const XP_START = 100;
 const MAX_PIECES = 16;
@@ -294,6 +335,13 @@ function otherOf(p){ return p==='p1' ? 'p2' : 'p1'; }
 function pushLog(state, msg){
   state.log.unshift('T'+state.turnNumber+' · '+msg);
   if(state.log.length>60) state.log.length=60;
+}
+
+/* ---- visual feedback events (captures / moves / placements flash briefly) ---- */
+function fxMainKey(c,r){ return 'main:'+cellKey(c,r); }
+function fxCornerKey(corner,c,r){ return 'corner:'+corner+':'+cellKey(c,r); }
+function bumpFx(capturedKeys, movedKeys){
+  game.fx = { v:(game.fx?game.fx.v:0)+1, captured:capturedKeys||[], moved:movedKeys||[] };
 }
 
 function homeRows(state, player){
@@ -422,7 +470,7 @@ function delakantosLegalMoves(state, ac, ar, orientation, owner){
         capture = true;
       }
     }
-    if(ok) moves.push([ac+dc, ar+dr, capture]);
+    if(ok) moves.push([ac+dc, ar+dr, capture, newBody]);
   }
   return moves;
 }
@@ -457,6 +505,9 @@ let myRole = null;    // 'p1' | 'p2'
 let pollTimer = null;
 let selected = null;  // {board:'main'|corner, corner:name, c,r}
 let pendingAction = null; // string identifying which action UI is open
+let lastFxSeen = -1;  // last game.fx.v this client has already flashed
+let currentFx = null;  // the fx event being flashed on THIS render pass (or null)
+let detailPiece = null; // {piece, revealed} for the piece-detail overlay, or null
 
 function html(strings, ...vals){ return strings.reduce((a,s,i)=> a+s+(vals[i]!==undefined?vals[i]:''), ''); }
 
@@ -668,24 +719,38 @@ function cellHTML(c,r,interactive,mode){
   if(ascP1) cls+=' zone-asc-p1';
   if(ascP2) cls+=' zone-asc-p2';
   if(piece && piece.wallOwner) cls+=' wall';
+  if(piece && piece.type==='delakantos') cls+=' dk-body dk-'+piece.owner;
 
-  let isSelectable=false, isLegal=false, isCapture=false, isSelected=false;
+  let isSelectable=false, isLegal=false, isCapture=false, isSelected=false, isGhost=false, isWallTarget=false;
   if(mode==='place' && interactive){
     const allowed = (myRole==='p1'? home1 : home2);
     if(allowed && !piece) isSelectable = !!(selected && selected.pickUid);
   }
   if(mode==='play' && interactive){
-    if(selected && selected.board==='main'){
+    if(pendingAction==='placeWall'){
+      isWallTarget = wallTargetCells().some(([cc,rr])=>cc===c && rr===r);
+    } else if(selected && selected.board==='main'){
       const selPiece = occ(game, selected.c, selected.r);
       isSelected = !!(piece && selPiece && piece.uid===selPiece.uid);
       const legal = (selected.moves||[]).find(m=>m[0]===c && m[1]===r);
       if(legal){ isLegal=true; isCapture=legal[2]; }
+      else if(selPiece && selPiece.type==='delakantos'){
+        isGhost = (selected.moves||[]).some(m=> m[3] && m[3].some(([bc,br])=>bc===c && br===r));
+      }
     }
     if(piece && piece.owner===myRole && game.turn===myRole) isSelectable=true;
+    else if(piece) isSelectable=true; // enemy piece: still clickable to view details
   }
   if(isSelectable) cls+=' selectable';
   if(isLegal) cls+= isCapture? ' legal-capture legal' : ' legal';
+  if(isGhost) cls+=' legal-ghost';
   if(isSelected) cls+=' selected';
+  if(isWallTarget) cls+=' wall-target selectable';
+  if(currentFx){
+    const k = fxMainKey(c,r);
+    if(currentFx.captured.includes(k)) cls+=' fx-capture';
+    else if(currentFx.moved.includes(k)) cls+=' fx-move';
+  }
 
   let inner='';
   if(piece){
@@ -694,10 +759,14 @@ function cellHTML(c,r,interactive,mode){
     const tip = escapeAttr(pieceTooltip(piece, revealed));
     if(piece.wallOwner){
       inner = html`<div class="piece ${piece.owner} wallpiece" title="${tip}">${WALL_ICON_SVG}</div>`;
+    } else if(piece.type==='delakantos' && piece.shadow){
+      inner = html`<div class="piece ${piece.owner} dk-shadow" title="${tip}"></div>`;
     } else {
       const iconMarkup = revealed ? pieceIconSVG(piece.type) : '<span class="fogmark">?</span>';
       inner = html`<div class="piece ${piece.owner}${revealed?'':' fog'}" title="${tip}">${iconMarkup}${piece.level>1?'<span class="lvl">'+piece.level+'</span>':''}</div>`;
     }
+  } else if(isWallTarget){
+    inner = html`<div class="wall-ghost">${WALL_ICON_SVG}</div>`;
   }
   return html`<div class="${cls}" data-c="${c}" data-r="${r}">${inner}</div>`;
 }
@@ -745,12 +814,13 @@ async function handlePlaceClick(c,r){
 function renderPlay(){
   const isMyTurn = game.turn===myRole;
   const me = game.players[myRole];
+  currentFx = (game.fx && game.fx.v !== lastFxSeen) ? game.fx : null;
   root.innerHTML = html`
     <div class="brand"><h1>PROS<span>FAIR</span></h1></div>
     <div class="tag">CÓDIGO: ${game.code} · ${myRole==='p1'?'Jugador 1':'Jugador 2'}</div>
     <hr class="rule"/>
     ${game.winner ? html`<div class="winner-banner">${game.winner===myRole? '¡VICTORIA!' : 'DERROTA'} — gana ${game.winner==='p1'?'Jugador 1':'Jugador 2'}</div>` : ''}
-    <div class="turn-banner">${game.winner? 'Partida terminada' : (isMyTurn? 'Tu turno' : 'Turno del rival')} · Turno Nº ${game.turnNumber}${game.ossaTriggered? ' · OSSA ACTIVA':''}</div>
+    <div class="turn-banner ${isMyTurn?'turn-mine':'turn-theirs'}">${game.winner? 'Partida terminada' : (isMyTurn? 'Tu turno' : 'Turno del rival')} · Turno Nº ${game.turnNumber}${game.ossaTriggered? ' · OSSA ACTIVA':''}</div>
     <div class="hud">
       <div class="stat mine"><b>${game.bankedXP[myRole]}</b>XP acumulado</div>
       <div class="stat"><b>${game.bankedXP[otherOf(myRole)]}</b>XP del rival</div>
@@ -761,9 +831,10 @@ function renderPlay(){
       ${game.ossaTriggered? '<span class="badge">Ossa</span>':''}
       ${game.terrainsHit.map(t=>`<span class="badge">${TERRAIN_NAMES[t]}</span>`).join('')}
     </div>
-    <div class="card">
+    <div class="card ${isMyTurn && !game.winner ? 'arena-glow':''}">
       <h2>Campo de batalla</h2>
-      <p class="fog-note">Las piezas enemigas no reveladas se muestran como "?" hasta que actúen, sean capturadas, o ya hayas visto ese tipo de pieza antes. Los tableros de esquina se activan gastando una ficha para teletransportar una pieza dentro; controla su casilla central 3 turnos seguidos para ganarla.</p>
+      <p class="fog-note">Las piezas enemigas no reveladas se muestran como "?" hasta que actúen, sean capturadas, o ya hayas visto ese tipo de pieza antes. Toca cualquier pieza (propia o ya revelada del rival) para ver sus detalles. Los tableros de esquina se activan gastando una ficha para teletransportar una pieza dentro; controla su casilla central 3 turnos seguidos para ganarla.</p>
+      ${pendingAction==='placeWall' ? '<p class="turn-hint">Elige una casilla resaltada junto a Ramagog para levantar el muro. <a class="linklike" id="btnCancelWall">Cancelar</a></p>' : ''}
       <div class="arena">
         <div class="side-col">
           ${renderCornerHTML('NW', isMyTurn && !game.winner)}
@@ -794,6 +865,10 @@ function renderPlay(){
   attachBoardHandlers('play');
   attachCornerHandlers();
   attachActionHandlers(isMyTurn);
+  if(document.getElementById('btnCancelWall')){
+    $('#btnCancelWall').onclick = ()=>{ pendingAction=null; render(); };
+  }
+  if(game.fx) lastFxSeen = game.fx.v;
 }
 
 function renderCornerHTML(corner, interactive){
@@ -811,10 +886,16 @@ function renderCornerHTML(corner, interactive){
           if(legal) isLegal=true;
         }
         if(p && p.owner===myRole && game.turn===myRole && !game.movedThisTurn) isSelectable=true;
+        else if(p) isSelectable=true; // enemy piece: clickable to view details
         if(pendingAction==='enterCorner' && pendingAction && !p) isSelectable=true;
       }
       if(isSelectable) cls+=' selectable';
       if(isLegal) cls+=' legal';
+      if(currentFx){
+        const k = fxCornerKey(corner,c,r);
+        if(currentFx.captured.includes(k)) cls+=' fx-capture';
+        else if(currentFx.moved.includes(k)) cls+=' fx-move';
+      }
       let inner='';
       if(p){
         const revealed = p.owner===myRole || game.seen[myRole].includes(p.type);
@@ -925,6 +1006,11 @@ async function handlePlayClick(c,r){
   if(game.turn!==myRole) return;
   const piece = occ(game,c,r);
 
+  if(pendingAction==='placeWall'){
+    await placeWallAt(c,r);
+    return;
+  }
+
   if(pendingAction==='enterCorner'){
     return; // corner entry handled via corner cells only
   }
@@ -983,6 +1069,7 @@ async function handleCornerClick(corner,c,r){
     cb.cells[cellKey(c,r)] = {...mainPiece};
     game.cornerTokens[myRole]--;
     game.actionUsedThisTurn = true;
+    bumpFx([], [fxCornerKey(corner,c,r)]);
     pushLog(game, (myRole==='p1'?'Jugador 1':'Jugador 2')+' envía una pieza al tablero '+corner+'.');
     pendingAction=null; selected=null;
     await saveGame(code, game);
@@ -993,11 +1080,19 @@ async function handleCornerClick(corner,c,r){
   if(selected && selected.board==='corner' && selected.corner===corner){
     const legal = (selected.moves||[]).find(m=>m[0]===c && m[1]===r);
     if(legal){ await executeCornerMove(corner, selected.c, selected.r, c, r); return; }
+    if(p && p.owner!==myRole){
+      showDetail(p, p.owner===myRole || game.seen[myRole].includes(p.type));
+      return;
+    }
     selected=null; render(); return;
   }
   if(p && p.owner===myRole && !game.movedThisTurn){
     selected = {board:'corner', corner, c, r, moves: cornerLegalMoves(game,corner,c,r)};
     render();
+    return;
+  }
+  if(p && p.owner!==myRole){
+    showDetail(p, p.owner===myRole || game.seen[myRole].includes(p.type));
   }
 }
 
@@ -1006,6 +1101,7 @@ async function executeMove(fc,fr,tc,tr){
   if(game.movedThisTurn) return;
   const piece = occ(game,fc,fr);
   const target = occ(game,tc,tr);
+  let captured = false;
   if(target && target.owner!==piece.owner){
     // Wolfien dodge
     if(target.type==='wolfien' && !target.dodged){
@@ -1019,6 +1115,7 @@ async function executeMove(fc,fr,tc,tr){
         game.cells[cellKey(tc,tr)] = piece;
         delete game.cells[cellKey(fc,fr)];
         finalizeMoveExtras(piece, tc,tr);
+        bumpFx([], [fxMainKey(tc,tr), fxMainKey(freeAdj[0],freeAdj[1])]);
         selected=null;
         await saveGame(code, game);
         render();
@@ -1026,10 +1123,12 @@ async function executeMove(fc,fr,tc,tr){
       }
     }
     captureAt(tc,tr,piece.owner);
+    captured = true;
   }
   delete game.cells[cellKey(fc,fr)];
   game.cells[cellKey(tc,tr)] = piece;
   finalizeMoveExtras(piece, tc, tr);
+  bumpFx(captured? [fxMainKey(tc,tr)] : [], [fxMainKey(tc,tr)]);
   selected=null;
   checkCornerStreaks();
   checkWinConditions();
@@ -1061,6 +1160,10 @@ async function executeDelaKantosMove(fc,fr,tc,tr,orientation){
     else game.cells[cellKey(cc,rr)] = {owner, type:'delakantos', uid:anchorPiece.uid, shadow:true, anchorKey:cellKey(newBody[0][0],newBody[0][1])};
   });
   finalizeMoveExtras(anchorPiece, tc, tr);
+  bumpFx(
+    capturedUids.size ? newBody.map(([cc,rr])=>fxMainKey(cc,rr)) : [],
+    newBody.map(([cc,rr])=>fxMainKey(cc,rr))
+  );
   selected=null;
   checkCornerStreaks();
   checkWinConditions();
@@ -1101,16 +1204,19 @@ async function executeCornerMove(corner, fc,fr,tc,tr){
   const cb = game.corners[corner];
   const piece = cb.cells[cellKey(fc,fr)];
   const target = cb.cells[cellKey(tc,tr)];
+  let captured = false;
   if(target && target.owner!==piece.owner){
     const spec = PIECES[target.type];
     game.bankedXP[piece.owner] += spec.cost;
     game.totalEarnedXP += spec.cost;
     pushLog(game,(piece.owner==='p1'?'Jugador 1':'Jugador 2')+' captura '+spec.name+' en el tablero '+corner+'.');
     checkThresholds();
+    captured = true;
   }
   delete cb.cells[cellKey(fc,fr)];
   cb.cells[cellKey(tc,tr)] = piece;
   game.movedThisTurn = true;
+  bumpFx(captured? [fxCornerKey(corner,tc,tr)] : [], [fxCornerKey(corner,tc,tr)]);
   selected=null;
   checkCornerStreaks();
   checkWinConditions();
@@ -1190,11 +1296,9 @@ async function useAbility(){
   if((piece.cooldowns[spec.ability]||0)>0 && !game.terrainsHit.includes(200)) return;
 
   if(spec.ability==='wall'){
-    const spot = [[1,0],[-1,0],[0,1],[0,-1]].map(([dc,dr])=>[selected.c+dc, selected.r+dr]).find(([cc,rr])=>inBounds(game,cc,rr) && !occ(game,cc,rr));
-    if(spot){
-      game.cells[cellKey(spot[0],spot[1])] = {owner:piece.owner, type:'__wall', uid:cryptoId(), wallOwner:piece.owner, wallTurns:3, level:1, cooldowns:{}};
-      pushLog(game,'Ramagog levanta un muro temporal.');
-    }
+    pendingAction = 'placeWall';
+    render();
+    return;
   } else if(spec.ability==='teleport'){
     const options=[];
     for(let dc=-2;dc<=2;dc++) for(let dr=-2;dr<=2;dr++){
@@ -1203,9 +1307,11 @@ async function useAbility(){
     }
     if(options.length){
       const [cc,rr] = options[Math.floor(Math.random()*options.length)];
+      const fromKey = fxMainKey(selected.c,selected.r);
       game.cells[cellKey(cc,rr)] = piece;
       delete game.cells[cellKey(selected.c,selected.r)];
       pushLog(game,'Mechite se teletransporta.');
+      bumpFx([], [fromKey, fxMainKey(cc,rr)]);
     }
   } else if(spec.ability==='push'){
     const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -1218,6 +1324,7 @@ async function useAbility(){
           delete game.cells[cellKey(tc,tr)];
           game.cells[cellKey(destC,destR)]=target;
           pushLog(game,'Balram empuja a una pieza enemiga.');
+          bumpFx([], [fxMainKey(destC,destR)]);
         }
         break;
       }
@@ -1225,6 +1332,32 @@ async function useAbility(){
   }
   piece.cooldowns[spec.ability] = spec.cd;
   game.actionUsedThisTurn = true;
+  await saveGame(code, game);
+  render();
+}
+
+function wallTargetCells(){
+  if(pendingAction!=='placeWall' || !selected || selected.board!=='main') return [];
+  const piece = occ(game, selected.c, selected.r);
+  if(!piece || PIECES[piece.type].ability!=='wall') return [];
+  return [[1,0],[-1,0],[0,1],[0,-1]]
+    .map(([dc,dr])=>[selected.c+dc, selected.r+dr])
+    .filter(([cc,rr])=>inBounds(game,cc,rr) && !occ(game,cc,rr));
+}
+
+async function placeWallAt(c,r){
+  if(!selected || selected.board!=='main') return;
+  const piece = occ(game, selected.c, selected.r);
+  if(!piece) return;
+  const spec = PIECES[piece.type];
+  const valid = wallTargetCells().some(([cc,rr])=>cc===c && rr===r);
+  if(!valid) return;
+  game.cells[cellKey(c,r)] = {owner:piece.owner, type:'__wall', uid:cryptoId(), wallOwner:piece.owner, wallTurns:3, level:1, cooldowns:{}};
+  pushLog(game,'Ramagog levanta un muro temporal.');
+  piece.cooldowns[spec.ability] = spec.cd;
+  game.actionUsedThisTurn = true;
+  bumpFx([], [fxMainKey(c,r)]);
+  pendingAction = null;
   await saveGame(code, game);
   render();
 }
@@ -1255,6 +1388,7 @@ async function fuse(){
   game.cells[cellKey(selected.c,selected.r)] = {owner:piece.owner, type:partner.result, uid:cryptoId(), level:1, cooldowns:{}, dodged:false};
   game.actionUsedThisTurn = true;
   pushLog(game,(piece.owner==='p1'?'Jugador 1':'Jugador 2')+' fusiona sus piezas en '+PIECES[partner.result].name+'.');
+  bumpFx([], [fxMainKey(selected.c,selected.r)]);
   selected=null;
   await saveGame(code, game);
   render();
@@ -1288,6 +1422,46 @@ function render(){
   if(game.status==='draft') renderDraft();
   else if(game.status==='placement') renderPlacement();
   else renderPlay();
+  renderDetailOverlay();
+}
+
+function showDetail(piece, revealed){
+  detailPiece = {piece, revealed};
+  render();
+}
+
+function pieceDetailBody(piece, revealed){
+  if(piece.wallOwner){
+    return {title:'Muro temporal', icon:WALL_ICON_SVG, lines:['Creado por Ramagog.','Bloquea el paso durante unos turnos.']};
+  }
+  if(!revealed){
+    return {title:'Pieza no identificada', icon:'<span class="fogmark" style="font-size:28px;">?</span>', lines:['Pertenece a tu rival y todavía no la has visto actuar, capturado, ni conoces ese tipo de pieza.','Se revelará automáticamente en cuanto eso ocurra.']};
+  }
+  const spec = PIECES[piece.type];
+  const lines = ['Movimiento: '+moveLabel(spec.move), spec.desc];
+  if(spec.id==='delakantos') lines.push('Ocupa 3 casillas en línea — capturar cualquiera de sus segmentos la elimina entera.');
+  lines.push('Nivel actual: '+piece.level+' / 3');
+  return {title:spec.name+(piece.owner? ' · '+(piece.owner==='p1'?'Jugador 1':'Jugador 2') : ''), icon:pieceIconSVG(piece.type), lines};
+}
+
+function renderDetailOverlay(){
+  if(!detailPiece) return;
+  const {piece, revealed} = detailPiece;
+  const info = pieceDetailBody(piece, revealed);
+  const ownerCls = piece.owner ? ' '+piece.owner : '';
+  const wrap = document.createElement('div');
+  wrap.className = 'detail-overlay';
+  wrap.innerHTML = html`
+    <div class="detail-card">
+      <div class="detail-icon${ownerCls}">${info.icon}</div>
+      <h3>${info.title}</h3>
+      ${info.lines.map(l=>`<p>${l}</p>`).join('')}
+      <button id="btnCloseDetail" class="primary">Cerrar</button>
+    </div>
+  `;
+  root.appendChild(wrap);
+  wrap.addEventListener('click', (e)=>{ if(e.target===wrap){ detailPiece=null; render(); } });
+  wrap.querySelector('#btnCloseDetail').onclick = ()=>{ detailPiece=null; render(); };
 }
 
 render();
